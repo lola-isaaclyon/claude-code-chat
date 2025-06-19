@@ -142,6 +142,31 @@
           "icon": "icon.png"
         }
       ]
+    },
+    "configuration": {
+      "title": "Claude Code Chat",
+      "properties": {
+        "claudeCodeChat.slashCommands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["/refactor", "/explain", "/test"],
+          "description": "Commands inserted when clicking palette buttons"
+        },
+        "claudeCodeChat.fileShortcuts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "src/extension.ts",
+            "src/ui.ts",
+            "README.md"
+          ],
+          "description": "File paths inserted with @ shortcuts"
+        }
+      }
     }
   },
   "scripts": {
