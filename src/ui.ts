@@ -1057,6 +1057,73 @@ const html = `<!DOCTYPE html>
 			color: var(--vscode-descriptionForeground);
 			opacity: 0.8;
 		}
+
+		/* Command Palette Styles */
+		.command-palette {
+			padding: 12px 16px;
+			border-bottom: 1px solid var(--vscode-panel-border);
+			background-color: var(--vscode-editor-background);
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.palette-section {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.command-btn {
+			background-color: var(--vscode-button-secondaryBackground);
+			color: var(--vscode-button-secondaryForeground);
+			border: 1px solid var(--vscode-panel-border);
+			padding: 6px 12px;
+			border-radius: 6px;
+			cursor: pointer;
+			font-size: 12px;
+			font-weight: 500;
+			transition: all 0.2s ease;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			min-width: fit-content;
+			white-space: nowrap;
+		}
+
+		.command-btn:hover {
+			background-color: var(--vscode-button-hoverBackground);
+			color: var(--vscode-button-foreground);
+			border-color: var(--vscode-focusBorder);
+			transform: translateY(-1px);
+		}
+
+		.command-btn:active {
+			transform: translateY(0);
+		}
+
+		.command-btn.compact-btn {
+			background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+			color: white;
+			border-color: rgba(255, 107, 107, 0.3);
+		}
+
+		.command-btn.compact-btn:hover {
+			background: linear-gradient(135deg, #ff5252 0%, #d63031 100%);
+			border-color: rgba(255, 107, 107, 0.5);
+		}
+
+		.command-btn span:first-child {
+			font-size: 14px;
+			line-height: 1;
+		}
+
+		.command-btn span:last-child {
+			font-size: 11px;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
 	</style>
 </head>
 <body>
@@ -1087,6 +1154,43 @@ const html = `<!DOCTYPE html>
 	</div>
 
 	<div class="chat-container" id="chatContainer">
+		<!-- Command Palette -->
+		<div class="command-palette" id="commandPalette" style="display: none;">
+			<div class="palette-section">
+				<button class="command-btn compact-btn" id="compactBtn" onclick="sendCompactCommand()">
+					<span>🗜️</span>
+					<span>Compact</span>
+				</button>
+			</div>
+			<div class="palette-section" id="slashCommandsSection">
+				<button class="command-btn" id="slashBtn1" onclick="sendSlashCommand(0)" style="display: none;">
+					<span>⚡</span>
+					<span id="slashLabel1"></span>
+				</button>
+				<button class="command-btn" id="slashBtn2" onclick="sendSlashCommand(1)" style="display: none;">
+					<span>⚡</span>
+					<span id="slashLabel2"></span>
+				</button>
+				<button class="command-btn" id="slashBtn3" onclick="sendSlashCommand(2)" style="display: none;">
+					<span>⚡</span>
+					<span id="slashLabel3"></span>
+				</button>
+			</div>
+			<div class="palette-section" id="fileShortcutsSection">
+				<button class="command-btn" id="fileBtn1" onclick="sendFileCommand(0)" style="display: none;">
+					<span>📄</span>
+					<span id="fileLabel1"></span>
+				</button>
+				<button class="command-btn" id="fileBtn2" onclick="sendFileCommand(1)" style="display: none;">
+					<span>📄</span>
+					<span id="fileLabel2"></span>
+				</button>
+				<button class="command-btn" id="fileBtn3" onclick="sendFileCommand(2)" style="display: none;">
+					<span>📄</span>
+					<span id="fileLabel3"></span>
+				</button>
+			</div>
+		</div>
 		<div class="messages" id="messages"></div>
 		<div class="input-container" id="inputContainer">
 			<div class="textarea-wrapper">
@@ -1227,10 +1331,13 @@ const html = `<!DOCTYPE html>
 		const fileSearchInput = document.getElementById('fileSearchInput');
 		const fileList = document.getElementById('fileList');
 		const imageBtn = document.getElementById('imageBtn');
+		const commandPalette = document.getElementById('commandPalette');
 
 		let isProcessRunning = false;
 		let filteredFiles = [];
 		let selectedFileIndex = -1;
+		let slashCommands = [];
+		let fileShortcuts = [];
 
 		function addMessage(content, type = 'claude') {
 			const messageDiv = document.createElement('div');
@@ -1496,6 +1603,66 @@ const html = `<!DOCTYPE html>
 				});
 				
 				messageInput.value = '';
+			}
+		}
+
+		// Command Palette Functions
+		function sendCompactCommand() {
+			messageInput.value = '/compact';
+			sendMessage();
+		}
+
+		function sendSlashCommand(index) {
+			if (slashCommands[index]) {
+				messageInput.value = slashCommands[index];
+				sendMessage();
+			}
+		}
+
+		function sendFileCommand(index) {
+			if (fileShortcuts[index]) {
+				const filename = fileShortcuts[index];
+				messageInput.value = '@' + filename;
+				sendMessage();
+			}
+		}
+
+		function updateCommandPalette(config) {
+			slashCommands = config.slashCommands || [];
+			fileShortcuts = config.fileShortcuts || [];
+
+			// Update slash command buttons
+			for (let i = 0; i < 3; i++) {
+				const btn = document.getElementById(\`slashBtn\${i + 1}\`);
+				const label = document.getElementById(\`slashLabel\${i + 1}\`);
+				
+				if (slashCommands[i]) {
+					btn.style.display = 'flex';
+					label.textContent = slashCommands[i].replace('/', '');
+				} else {
+					btn.style.display = 'none';
+				}
+			}
+
+			// Update file shortcut buttons
+			for (let i = 0; i < 3; i++) {
+				const btn = document.getElementById(\`fileBtn\${i + 1}\`);
+				const label = document.getElementById(\`fileLabel\${i + 1}\`);
+				
+				if (fileShortcuts[i]) {
+					btn.style.display = 'flex';
+					// Extract filename from path
+					const filename = fileShortcuts[i].split('/').pop() || fileShortcuts[i];
+					label.textContent = filename;
+				} else {
+					btn.style.display = 'none';
+				}
+			}
+
+			// Show command palette if we have any config
+			const hasAnyCommands = slashCommands.some(cmd => cmd) || fileShortcuts.some(file => file);
+			if (hasAnyCommands || true) { // Always show for the compact button
+				commandPalette.style.display = 'flex';
 			}
 		}
 
@@ -1914,6 +2081,10 @@ const html = `<!DOCTYPE html>
 					
 				case 'conversationList':
 					displayConversationList(message.data);
+					break;
+					
+				case 'config':
+					updateCommandPalette(message.data);
 					break;
 			}
 		});

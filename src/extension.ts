@@ -224,6 +224,16 @@ class ClaudeChatProvider {
 				});
 			}
 
+			// Send configuration for command palette
+			const config = vscode.workspace.getConfiguration('claudeCodeChat');
+			this._panel?.webview.postMessage({
+				type: 'config',
+				data: {
+					slashCommands: config.get('slashCommands', ['/refactor', '/explain', '/test']),
+					fileShortcuts: config.get('fileShortcuts', ['src/extension.ts', 'src/ui.ts', 'README.md'])
+				}
+			});
+
 			this._panel?.webview.postMessage({
 				type: 'ready',
 				data: 'Ready to chat with Claude Code! Type your message below.'
